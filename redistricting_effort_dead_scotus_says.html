@@ -1,5 +1,5 @@
 
-<h2 class="sr-only">Interactive US map showing 2024 redistricting status and House seat swing potential by state</h2>
+<h2 class="sr-only">Interactive US map showing status of redistricting measures since the 2024 elections</h2>
 
 <div style="padding: 1rem 0 0.5rem;">
   <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:1rem; align-items:center;">
@@ -25,65 +25,65 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 <script>
 const stateData = {
-  "Alabama":      { redistrict: "court", swing: -1, seats: 7, dem: 1, rep: 6, notes: "Court-ordered map added 1 majority-Black district after VRA challenge." },
-  "Alaska":       { redistrict: "legislature", swing: 0, seats: 1, dem: 0, rep: 1, notes: "At-large seat, minimal redistricting impact." },
-  "Arizona":      { redistrict: "commission", swing: 1, seats: 9, dem: 4, rep: 5, notes: "Independent commission drew competitive suburban Phoenix districts." },
-  "Arkansas":     { redistrict: "legislature", swing: 0, seats: 4, dem: 0, rep: 4, notes: "Legislature-drawn map, strongly GOP." },
-  "California":   { redistrict: "commission", swing: 2, seats: 52, dem: 40, rep: 12, notes: "Citizens Redistricting Commission; several competitive inland districts." },
-  "Colorado":     { redistrict: "commission", swing: 1, seats: 8, dem: 4, rep: 4, notes: "Independent commission created split delegation with competitive CD-8." },
-  "Connecticut":  { redistrict: "legislature", swing: 0, seats: 5, dem: 5, rep: 0, notes: "Heavily Dem, minimal change." },
-  "Delaware":     { redistrict: "legislature", swing: 0, seats: 1, dem: 1, rep: 0, notes: "At-large seat." },
-  "Florida":      { redistrict: "gerrymander_r", swing: -2, seats: 28, dem: 8, rep: 20, notes: "Governor pushed aggressive GOP map over legislature's initial plan, adding ~4 safe GOP seats." },
-  "Georgia":      { redistrict: "gerrymander_r", swing: 1, seats: 14, dem: 5, rep: 9, notes: "Court ordered new maps for 2024, likely adding 1 majority-Black seat." },
-  "Hawaii":       { redistrict: "commission", swing: 0, seats: 2, dem: 2, rep: 0, notes: "Safe Dem." },
-  "Idaho":        { redistrict: "commission", swing: 0, seats: 2, dem: 0, rep: 2, notes: "Safe GOP." },
-  "Illinois":     { redistrict: "gerrymander_d", swing: -1, seats: 17, dem: 14, rep: 3, notes: "Dem legislature redrew lines; GOP lost seats in 2022." },
-  "Indiana":      { redistrict: "legislature", swing: 0, seats: 9, dem: 2, rep: 7, notes: "Stable GOP map." },
-  "Iowa":         { redistrict: "nonpartisan", swing: 1, seats: 4, dem: 1, rep: 3, notes: "Nonpartisan Legislative Services Bureau; CD-3 is a perennial tossup." },
-  "Kansas":       { redistrict: "gerrymander_r", swing: 0, seats: 4, dem: 1, rep: 3, notes: "Legislature cracked Wyandotte County (Kansas City) to dilute Dem votes in CD-3." },
-  "Kentucky":     { redistrict: "legislature", swing: 0, seats: 6, dem: 1, rep: 5, notes: "Safe GOP." },
-  "Louisiana":    { redistrict: "court", swing: 1, seats: 6, dem: 1, rep: 5, notes: "Court ordered second majority-Black district; 2024 maps still in litigation." },
-  "Maine":        { redistrict: "legislature", swing: 0, seats: 2, dem: 1, rep: 1, notes: "CD-2 is a competitive rural/suburban district." },
-  "Maryland":     { redistrict: "court", swing: 0, seats: 8, dem: 7, rep: 1, notes: "Courts struck Dem gerrymander; new maps are more compact." },
-  "Massachusetts":{ redistrict: "legislature", swing: 0, seats: 9, dem: 9, rep: 0, notes: "Safe Dem." },
-  "Michigan":     { redistrict: "commission", swing: 2, seats: 13, dem: 7, rep: 6, notes: "Voter-created independent commission replaced aggressive GOP gerrymander; flipped 2+ seats Dem in 2022." },
-  "Minnesota":    { redistrict: "court", swing: 1, seats: 8, dem: 4, rep: 4, notes: "Split legislature led to court-drawn maps; evenly split delegation." },
-  "Mississippi":  { redistrict: "legislature", swing: 0, seats: 4, dem: 1, rep: 3, notes: "Stable." },
-  "Missouri":     { redistrict: "gerrymander_r", swing: 0, seats: 8, dem: 1, rep: 7, notes: "GOP cracked Kansas City to pack Dem voters." },
-  "Montana":      { redistrict: "commission", swing: 0, seats: 2, dem: 0, rep: 2, notes: "Gained second seat; both lean GOP." },
-  "Nebraska":     { redistrict: "legislature", swing: 0, seats: 3, dem: 0, rep: 3, notes: "Omaha's CD-2 is competitive." },
-  "Nevada":       { redistrict: "legislature", swing: 1, seats: 4, dem: 3, rep: 1, notes: "All 4 seats are competitive; Dem legislature drew favorable maps." },
-  "New Hampshire":{ redistrict: "gerrymander_r", swing: 0, seats: 2, dem: 1, rep: 1, notes: "GOP map in litigation; both seats are swing seats." },
-  "New Jersey":   { redistrict: "commission", swing: 1, seats: 12, dem: 10, rep: 2, notes: "Bipartisan commission; several suburban swing districts." },
-  "New Mexico":   { redistrict: "legislature", swing: 0, seats: 3, dem: 3, rep: 0, notes: "Dem-leaning." },
-  "New York":     { redistrict: "court", swing: 2, seats: 26, dem: 15, rep: 11, notes: "Courts struck Dem gerrymander; court-drawn maps created many competitive districts." },
-  "North Carolina":{ redistrict: "gerrymander_r", swing: -2, seats: 14, dem: 7, rep: 7, notes: "GOP legislature redrew aggressive maps for 2024, potentially flipping 3-4 seats." },
-  "North Dakota": { redistrict: "legislature", swing: 0, seats: 1, dem: 0, rep: 1, notes: "At-large, safe GOP." },
-  "Ohio":         { redistrict: "court", swing: 1, seats: 15, dem: 5, rep: 10, notes: "Commission maps struck 7 times; current maps still lean GOP." },
-  "Oklahoma":     { redistrict: "legislature", swing: 0, seats: 5, dem: 0, rep: 5, notes: "Safe GOP." },
-  "Oregon":       { redistrict: "legislature", swing: 0, seats: 6, dem: 4, rep: 2, notes: "Gained 1 seat; CD-5 is competitive." },
-  "Pennsylvania": { redistrict: "court", swing: 1, seats: 17, dem: 9, rep: 8, notes: "Court-drawn maps following governor's veto; evenly split delegation with several tossups." },
-  "Rhode Island": { redistrict: "legislature", swing: 0, seats: 2, dem: 2, rep: 0, notes: "Safe Dem." },
-  "South Carolina":{ redistrict: "gerrymander_r", swing: 0, seats: 7, dem: 1, rep: 6, notes: "VRA challenge to CD-1 maps ongoing." },
-  "South Dakota": { redistrict: "legislature", swing: 0, seats: 1, dem: 0, rep: 1, notes: "At-large, safe GOP." },
-  "Tennessee":    { redistrict: "gerrymander_r", swing: 0, seats: 9, dem: 2, rep: 7, notes: "Nashville cracked across 3 districts." },
-  "Texas":        { redistrict: "gerrymander_r", swing: 1, seats: 38, dem: 13, rep: 25, notes: "Ongoing VRA litigation; several majority-minority districts challenged." },
-  "Utah":         { redistrict: "gerrymander_r", swing: 0, seats: 4, dem: 0, rep: 4, notes: "Legislature cracked Salt Lake City across 4 districts over citizens commission." },
-  "Vermont":      { redistrict: "legislature", swing: 0, seats: 1, dem: 1, rep: 0, notes: "At-large, safe Dem." },
-  "Virginia":     { redistrict: "commission", swing: 1, seats: 11, dem: 5, rep: 6, notes: "Bipartisan commission; suburban NoVA districts are swing seats." },
-  "Washington":   { redistrict: "commission", swing: 1, seats: 10, dem: 7, rep: 3, notes: "Bipartisan commission; CD-3 and CD-8 are competitive." },
-  "West Virginia":{ redistrict: "legislature", swing: 0, seats: 2, dem: 0, rep: 2, notes: "Safe GOP." },
-  "Wisconsin":    { redistrict: "court", swing: 2, seats: 8, dem: 3, rep: 5, notes: "Supreme Court struck GOP gerrymander; new 2024 maps create more competitive districts." },
-  "Wyoming":      { redistrict: "legislature", swing: 0, seats: 1, dem: 0, rep: 1, notes: "At-large, safe GOP." }
+  "Alabama":      { redistrict: "none", swing: 0, seats: 7, dem: 1, rep: 6, notes: "New map pending legislative action (Louisiana v. Callais)" },
+  "Alaska":       { redistrict: "none", swing: 0, seats: 1, dem: 0, rep: 1, notes: "" },
+  "Arizona":      { redistrict: "none", swing: 0, seats: 9, dem: 4, rep: 5, notes: "" },
+  "Arkansas":     { redistrict: "none", swing: 0, seats: 4, dem: 0, rep: 4, notes: "" },
+  "California":   { redistrict: "gerrymander_d", swing: 5, seats: 52, dem: 40, rep: 12, notes: "Approved via referendum (Proposition 50)" },
+  "Colorado":     { redistrict: "none", swing: 0, seats: 8, dem: 4, rep: 4, notes: "" },
+  "Connecticut":  { redistrict: "none", swing: 0, seats: 5, dem: 5, rep: 0, notes: "" },
+  "Delaware":     { redistrict: "none", swing: 0, seats: 1, dem: 1, rep: 0, notes: "" },
+  "Florida":      { redistrict: "gerrymander_r", swing: -4, seats: 28, dem: 8, rep: 20, notes: "Bill signed by Gov. DeSantis" },
+  "Georgia":      { redistrict: "none", swing: 0, seats: 14, dem: 5, rep: 9, notes: "" },
+  "Hawaii":       { redistrict: "none", swing: 0, seats: 2, dem: 2, rep: 0, notes: "" },
+  "Idaho":        { redistrict: "none", swing: 0, seats: 2, dem: 0, rep: 2, notes: "" },
+  "Illinois":     { redistrict: "none", swing: 0, seats: 17, dem: 14, rep: 3, notes: "" },
+  "Indiana":      { redistrict: "failed", swing: 0, seats: 9, dem: 2, rep: 7, notes: "Republican proposal rejected in state senate" },
+  "Iowa":         { redistrict: "none", swing: 0, seats: 4, dem: 1, rep: 3, notes: "" },
+  "Kansas":       { redistrict: "none", swing: 0, seats: 4, dem: 1, rep: 3, notes: "" },
+  "Kentucky":     { redistrict: "none", swing: 0, seats: 6, dem: 1, rep: 5, notes: "" },
+  "Louisiana":    { redistrict: "none", swing: 0, seats: 6, dem: 1, rep: 5, notes: "" },
+  "Maine":        { redistrict: "none", swing: 0, seats: 2, dem: 1, rep: 1, notes: "" },
+  "Maryland":     { redistrict: "none", swing: 0, seats: 8, dem: 7, rep: 1, notes: "Democratic bill left in committee by state senate" },
+  "Massachusetts":{ redistrict: "none", swing: 0, seats: 9, dem: 9, rep: 0, notes: "" },
+  "Michigan":     { redistrict: "none", swing: 0, seats: 13, dem: 7, rep: 6, notes: "" },
+  "Minnesota":    { redistrict: "none", swing: 0, seats: 8, dem: 4, rep: 4, notes: "" },
+  "Mississippi":  { redistrict: "none", swing: 0, seats: 4, dem: 1, rep: 3, notes: "" },
+  "Missouri":     { redistrict: "gerrymander_r", swing: -1, seats: 8, dem: 1, rep: 7, notes: "Popular initative may prevent use of the map in 2026" },
+  "Montana":      { redistrict: "none", swing: 0, seats: 2, dem: 0, rep: 2, notes: "" },
+  "Nebraska":     { redistrict: "none", swing: 0, seats: 3, dem: 0, rep: 3, notes: "" },
+  "Nevada":       { redistrict: "none", swing: 0, seats: 4, dem: 3, rep: 1, notes: "" },
+  "New Hampshire":{ redistrict: "none", swing: 0, seats: 2, dem: 1, rep: 1, notes: "" },
+  "New Jersey":   { redistrict: "none", swing: 0, seats: 12, dem: 10, rep: 2, notes: "" },
+  "New Mexico":   { redistrict: "none", swing: 0, seats: 3, dem: 3, rep: 0, notes: "" },
+  "New York":     { redistrict: "failed", swing: 0, seats: 26, dem: 15, rep: 11, notes: "SCOTUS blocked Democratic attempt" },
+  "North Carolina":{ redistrict: "gerrymander_r", swing: -1, seats: 14, dem: 7, rep: 7, notes: "Allowed by federal judges" },
+  "North Dakota": { redistrict: "none", swing: 0, seats: 1, dem: 0, rep: 1, notes: "" },
+  "Ohio":         { redistrict: "commission", swing: -2, seats: 15, dem: 5, rep: 10, notes: "" },
+  "Oklahoma":     { redistrict: "none", swing: 0, seats: 5, dem: 0, rep: 5, notes: "" },
+  "Oregon":       { redistrict: "none", swing: 0, seats: 6, dem: 4, rep: 2, notes: "" },
+  "Pennsylvania": { redistrict: "none", swing: 0, seats: 17, dem: 9, rep: 8, notes: "" },
+  "Rhode Island": { redistrict: "none", swing: 0, seats: 2, dem: 2, rep: 0, notes: "" },
+  "South Carolina":{ redistrict: "none", swing: 0, seats: 7, dem: 1, rep: 6, notes: "" },
+  "South Dakota": { redistrict: "none", swing: 0, seats: 1, dem: 0, rep: 1, notes: "" },
+  "Tennessee":    { redistrict: "gerrymander_r", swing: -1, seats: 9, dem: 2, rep: 7, notes: "Bill signed by Gov. Lee" },
+  "Texas":        { redistrict: "gerrymander_r", swing: -5, seats: 38, dem: 13, rep: 25, notes: "" },
+  "Utah":         { redistrict: "court", swing: 1, seats: 4, dem: 0, rep: 4, notes: "Appeals by GOP failed at U.S. federal court" },
+  "Vermont":      { redistrict: "none", swing: 0, seats: 1, dem: 1, rep: 0, notes: "" },
+  "Virginia":     { redistrict: "failed", swing: 0, seats: 11, dem: 5, rep: 6, notes: "Amendment ruled unconstitutional, appeals failed at SCOTUS" },
+  "Washington":   { redistrict: "none", swing: 0, seats: 10, dem: 7, rep: 3, notes: "" },
+  "West Virginia":{ redistrict: "none", swing: 0, seats: 2, dem: 0, rep: 2, notes: "" },
+  "Wisconsin":    { redistrict: "none", swing: 0, seats: 8, dem: 3, rep: 5, notes: "" },
+  "Wyoming":      { redistrict: "none", swing: 0, seats: 1, dem: 0, rep: 1, notes: "" }
 };
 
 const redistrictColors = {
   gerrymander_r: { fill: "#F7C1C1", stroke: "#A32D2D", label: "GOP gerrymander", text: "#791F1F" },
   gerrymander_d: { fill: "#B5D4F4", stroke: "#185FA5", label: "Dem gerrymander", text: "#0C447C" },
   court:         { fill: "#FAC775", stroke: "#854F0B", label: "Court-ordered map", text: "#633806" },
-  commission:    { fill: "#C0DD97", stroke: "#3B6D11", label: "Independent commission", text: "#27500A" },
-  nonpartisan:   { fill: "#CECBF6", stroke: "#534AB7", label: "Nonpartisan agency", text: "#3C3489" },
-  legislature:   { fill: "#D3D1C7", stroke: "#5F5E5A", label: "Legislature (no major change)", text: "#444441" }
+  commission:    { fill: "#ECFAE7", stroke: "185FA5", label: "Independent commision drew map", text: "0C447C" },
+  failed:    { fill: "#303030", stroke: "#3B6D11", label: "Redistricting attempt failed", text: "#27500A" },
+  none:   { fill: "#D3D1C7", stroke: "#5F5E5A", label: "No redistricting", text: "#444441" }
 };
 
 function swingColor(v) {
@@ -122,8 +122,8 @@ function renderLegend() {
       { fill:"#B5D4F4", stroke:"#185FA5", label:"Gain 2+ Dem seats" },
       { fill:"#E6F1FB", stroke:"#378ADD", label:"Gain 1 Dem seat" },
       { fill:"#D3D1C7", stroke:"#888780", label:"No change" },
-      { fill:"#FAECE7", stroke:"#993C1D", label:"Lose 1 Dem seat" },
-      { fill:"#F7C1C1", stroke:"#A32D2D", label:"Lose 2+ Dem seats" }
+      { fill:"#FAECE7", stroke:"#993C1D", label:"Gain 1 GOP seat" },
+      { fill:"#F7C1C1", stroke:"#A32D2D", label:"Gain 2+ GOP seats" }
     ].forEach(c => {
       leg.innerHTML += `<span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:${c.fill};border:1px solid ${c.stroke};display:inline-block;"></span><span>${c.label}</span></span>`;
     });
