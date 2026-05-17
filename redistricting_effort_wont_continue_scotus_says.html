@@ -1,0 +1,215 @@
+
+<h2 class="sr-only">Interactive US map showing 2024 redistricting status and House seat swing potential by state</h2>
+
+<div style="padding: 1rem 0 0.5rem;">
+  <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:1rem; align-items:center;">
+    <span style="font-size:13px; color:var(--color-text-secondary); margin-right:4px;">View:</span>
+    <button id="btn-redistrict" onclick="setMode('redistrict')" style="font-size:13px; padding:4px 12px; border-radius:6px; border:1.5px solid #3B6D11; background:#EAF3DE; color:#3B6D11; cursor:pointer; font-weight:500;">Redistricting status</button>
+    <button id="btn-swing" onclick="setMode('swing')" style="font-size:13px; padding:4px 12px; border-radius:6px; border:0.5px solid var(--color-border-secondary); background:transparent; color:var(--color-text-secondary); cursor:pointer;">Seat swing potential</button>
+  </div>
+
+  <div id="map" style="width:100%; position:relative;"></div>
+
+  <div id="legend" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:0.75rem; font-size:12px; color:var(--color-text-secondary);"></div>
+
+  <div id="tooltip" style="display:none; position:absolute; background:var(--color-background-primary); border:0.5px solid var(--color-border-secondary); border-radius:8px; padding:10px 14px; font-size:13px; pointer-events:none; max-width:220px; z-index:10; box-shadow:none;"></div>
+</div>
+
+<div id="detail-cards" style="display:none; margin-top:1rem; padding-top:1rem; border-top:0.5px solid var(--color-border-tertiary);">
+  <p id="detail-name" style="font-size:16px; font-weight:500; margin:0 0 8px;"></p>
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;" id="detail-grid"></div>
+  <p id="detail-notes" style="font-size:13px; color:var(--color-text-secondary); margin:8px 0 0;"></p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script>
+const stateData = {
+  "Alabama":      { redistrict: "court", swing: -1, seats: 7, dem: 1, rep: 6, notes: "Court-ordered map added 1 majority-Black district after VRA challenge." },
+  "Alaska":       { redistrict: "legislature", swing: 0, seats: 1, dem: 0, rep: 1, notes: "At-large seat, minimal redistricting impact." },
+  "Arizona":      { redistrict: "commission", swing: 1, seats: 9, dem: 4, rep: 5, notes: "Independent commission drew competitive suburban Phoenix districts." },
+  "Arkansas":     { redistrict: "legislature", swing: 0, seats: 4, dem: 0, rep: 4, notes: "Legislature-drawn map, strongly GOP." },
+  "California":   { redistrict: "commission", swing: 2, seats: 52, dem: 40, rep: 12, notes: "Citizens Redistricting Commission; several competitive inland districts." },
+  "Colorado":     { redistrict: "commission", swing: 1, seats: 8, dem: 4, rep: 4, notes: "Independent commission created split delegation with competitive CD-8." },
+  "Connecticut":  { redistrict: "legislature", swing: 0, seats: 5, dem: 5, rep: 0, notes: "Heavily Dem, minimal change." },
+  "Delaware":     { redistrict: "legislature", swing: 0, seats: 1, dem: 1, rep: 0, notes: "At-large seat." },
+  "Florida":      { redistrict: "gerrymander_r", swing: -2, seats: 28, dem: 8, rep: 20, notes: "Governor pushed aggressive GOP map over legislature's initial plan, adding ~4 safe GOP seats." },
+  "Georgia":      { redistrict: "gerrymander_r", swing: 1, seats: 14, dem: 5, rep: 9, notes: "Court ordered new maps for 2024, likely adding 1 majority-Black seat." },
+  "Hawaii":       { redistrict: "commission", swing: 0, seats: 2, dem: 2, rep: 0, notes: "Safe Dem." },
+  "Idaho":        { redistrict: "commission", swing: 0, seats: 2, dem: 0, rep: 2, notes: "Safe GOP." },
+  "Illinois":     { redistrict: "gerrymander_d", swing: -1, seats: 17, dem: 14, rep: 3, notes: "Dem legislature redrew lines; GOP lost seats in 2022." },
+  "Indiana":      { redistrict: "legislature", swing: 0, seats: 9, dem: 2, rep: 7, notes: "Stable GOP map." },
+  "Iowa":         { redistrict: "nonpartisan", swing: 1, seats: 4, dem: 1, rep: 3, notes: "Nonpartisan Legislative Services Bureau; CD-3 is a perennial tossup." },
+  "Kansas":       { redistrict: "gerrymander_r", swing: 0, seats: 4, dem: 1, rep: 3, notes: "Legislature cracked Wyandotte County (Kansas City) to dilute Dem votes in CD-3." },
+  "Kentucky":     { redistrict: "legislature", swing: 0, seats: 6, dem: 1, rep: 5, notes: "Safe GOP." },
+  "Louisiana":    { redistrict: "court", swing: 1, seats: 6, dem: 1, rep: 5, notes: "Court ordered second majority-Black district; 2024 maps still in litigation." },
+  "Maine":        { redistrict: "legislature", swing: 0, seats: 2, dem: 1, rep: 1, notes: "CD-2 is a competitive rural/suburban district." },
+  "Maryland":     { redistrict: "court", swing: 0, seats: 8, dem: 7, rep: 1, notes: "Courts struck Dem gerrymander; new maps are more compact." },
+  "Massachusetts":{ redistrict: "legislature", swing: 0, seats: 9, dem: 9, rep: 0, notes: "Safe Dem." },
+  "Michigan":     { redistrict: "commission", swing: 2, seats: 13, dem: 7, rep: 6, notes: "Voter-created independent commission replaced aggressive GOP gerrymander; flipped 2+ seats Dem in 2022." },
+  "Minnesota":    { redistrict: "court", swing: 1, seats: 8, dem: 4, rep: 4, notes: "Split legislature led to court-drawn maps; evenly split delegation." },
+  "Mississippi":  { redistrict: "legislature", swing: 0, seats: 4, dem: 1, rep: 3, notes: "Stable." },
+  "Missouri":     { redistrict: "gerrymander_r", swing: 0, seats: 8, dem: 1, rep: 7, notes: "GOP cracked Kansas City to pack Dem voters." },
+  "Montana":      { redistrict: "commission", swing: 0, seats: 2, dem: 0, rep: 2, notes: "Gained second seat; both lean GOP." },
+  "Nebraska":     { redistrict: "legislature", swing: 0, seats: 3, dem: 0, rep: 3, notes: "Omaha's CD-2 is competitive." },
+  "Nevada":       { redistrict: "legislature", swing: 1, seats: 4, dem: 3, rep: 1, notes: "All 4 seats are competitive; Dem legislature drew favorable maps." },
+  "New Hampshire":{ redistrict: "gerrymander_r", swing: 0, seats: 2, dem: 1, rep: 1, notes: "GOP map in litigation; both seats are swing seats." },
+  "New Jersey":   { redistrict: "commission", swing: 1, seats: 12, dem: 10, rep: 2, notes: "Bipartisan commission; several suburban swing districts." },
+  "New Mexico":   { redistrict: "legislature", swing: 0, seats: 3, dem: 3, rep: 0, notes: "Dem-leaning." },
+  "New York":     { redistrict: "court", swing: 2, seats: 26, dem: 15, rep: 11, notes: "Courts struck Dem gerrymander; court-drawn maps created many competitive districts." },
+  "North Carolina":{ redistrict: "gerrymander_r", swing: -2, seats: 14, dem: 7, rep: 7, notes: "GOP legislature redrew aggressive maps for 2024, potentially flipping 3-4 seats." },
+  "North Dakota": { redistrict: "legislature", swing: 0, seats: 1, dem: 0, rep: 1, notes: "At-large, safe GOP." },
+  "Ohio":         { redistrict: "court", swing: 1, seats: 15, dem: 5, rep: 10, notes: "Commission maps struck 7 times; current maps still lean GOP." },
+  "Oklahoma":     { redistrict: "legislature", swing: 0, seats: 5, dem: 0, rep: 5, notes: "Safe GOP." },
+  "Oregon":       { redistrict: "legislature", swing: 0, seats: 6, dem: 4, rep: 2, notes: "Gained 1 seat; CD-5 is competitive." },
+  "Pennsylvania": { redistrict: "court", swing: 1, seats: 17, dem: 9, rep: 8, notes: "Court-drawn maps following governor's veto; evenly split delegation with several tossups." },
+  "Rhode Island": { redistrict: "legislature", swing: 0, seats: 2, dem: 2, rep: 0, notes: "Safe Dem." },
+  "South Carolina":{ redistrict: "gerrymander_r", swing: 0, seats: 7, dem: 1, rep: 6, notes: "VRA challenge to CD-1 maps ongoing." },
+  "South Dakota": { redistrict: "legislature", swing: 0, seats: 1, dem: 0, rep: 1, notes: "At-large, safe GOP." },
+  "Tennessee":    { redistrict: "gerrymander_r", swing: 0, seats: 9, dem: 2, rep: 7, notes: "Nashville cracked across 3 districts." },
+  "Texas":        { redistrict: "gerrymander_r", swing: 1, seats: 38, dem: 13, rep: 25, notes: "Ongoing VRA litigation; several majority-minority districts challenged." },
+  "Utah":         { redistrict: "gerrymander_r", swing: 0, seats: 4, dem: 0, rep: 4, notes: "Legislature cracked Salt Lake City across 4 districts over citizens commission." },
+  "Vermont":      { redistrict: "legislature", swing: 0, seats: 1, dem: 1, rep: 0, notes: "At-large, safe Dem." },
+  "Virginia":     { redistrict: "commission", swing: 1, seats: 11, dem: 5, rep: 6, notes: "Bipartisan commission; suburban NoVA districts are swing seats." },
+  "Washington":   { redistrict: "commission", swing: 1, seats: 10, dem: 7, rep: 3, notes: "Bipartisan commission; CD-3 and CD-8 are competitive." },
+  "West Virginia":{ redistrict: "legislature", swing: 0, seats: 2, dem: 0, rep: 2, notes: "Safe GOP." },
+  "Wisconsin":    { redistrict: "court", swing: 2, seats: 8, dem: 3, rep: 5, notes: "Supreme Court struck GOP gerrymander; new 2024 maps create more competitive districts." },
+  "Wyoming":      { redistrict: "legislature", swing: 0, seats: 1, dem: 0, rep: 1, notes: "At-large, safe GOP." }
+};
+
+const redistrictColors = {
+  gerrymander_r: { fill: "#F7C1C1", stroke: "#A32D2D", label: "GOP gerrymander", text: "#791F1F" },
+  gerrymander_d: { fill: "#B5D4F4", stroke: "#185FA5", label: "Dem gerrymander", text: "#0C447C" },
+  court:         { fill: "#FAC775", stroke: "#854F0B", label: "Court-ordered map", text: "#633806" },
+  commission:    { fill: "#C0DD97", stroke: "#3B6D11", label: "Independent commission", text: "#27500A" },
+  nonpartisan:   { fill: "#CECBF6", stroke: "#534AB7", label: "Nonpartisan agency", text: "#3C3489" },
+  legislature:   { fill: "#D3D1C7", stroke: "#5F5E5A", label: "Legislature (no major change)", text: "#444441" }
+};
+
+function swingColor(v) {
+  if (v >= 2)  return { fill: "#B5D4F4", stroke: "#185FA5", text: "#0C447C" };
+  if (v === 1) return { fill: "#E6F1FB", stroke: "#378ADD", text: "#185FA5" };
+  if (v === 0) return { fill: "#D3D1C7", stroke: "#888780", text: "#444441" };
+  if (v === -1)return { fill: "#FAECE7", stroke: "#993C1D", text: "#712B13" };
+  return            { fill: "#F7C1C1", stroke: "#A32D2D", text: "#791F1F" };
+}
+
+let currentMode = "redistrict";
+let selectedState = null;
+
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById("btn-redistrict").style.cssText = mode === "redistrict"
+    ? "font-size:13px;padding:4px 12px;border-radius:6px;border:1.5px solid #3B6D11;background:#EAF3DE;color:#3B6D11;cursor:pointer;font-weight:500;"
+    : "font-size:13px;padding:4px 12px;border-radius:6px;border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);cursor:pointer;";
+  document.getElementById("btn-swing").style.cssText = mode === "swing"
+    ? "font-size:13px;padding:4px 12px;border-radius:6px;border:1.5px solid #185FA5;background:#E6F1FB;color:#185FA5;cursor:pointer;font-weight:500;"
+    : "font-size:13px;padding:4px 12px;border-radius:6px;border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);cursor:pointer;";
+  renderMap();
+  renderLegend();
+  if (selectedState) showDetail(selectedState);
+}
+
+function renderLegend() {
+  const leg = document.getElementById("legend");
+  leg.innerHTML = "";
+  if (currentMode === "redistrict") {
+    Object.entries(redistrictColors).forEach(([k, c]) => {
+      leg.innerHTML += `<span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:${c.fill};border:1px solid ${c.stroke};display:inline-block;"></span><span>${c.label}</span></span>`;
+    });
+  } else {
+    [
+      { fill:"#B5D4F4", stroke:"#185FA5", label:"Gain 2+ Dem seats" },
+      { fill:"#E6F1FB", stroke:"#378ADD", label:"Gain 1 Dem seat" },
+      { fill:"#D3D1C7", stroke:"#888780", label:"No change" },
+      { fill:"#FAECE7", stroke:"#993C1D", label:"Lose 1 Dem seat" },
+      { fill:"#F7C1C1", stroke:"#A32D2D", label:"Lose 2+ Dem seats" }
+    ].forEach(c => {
+      leg.innerHTML += `<span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:${c.fill};border:1px solid ${c.stroke};display:inline-block;"></span><span>${c.label}</span></span>`;
+    });
+  }
+}
+
+function showDetail(name) {
+  selectedState = name;
+  const d = stateData[name];
+  if (!d) return;
+  const cards = document.getElementById("detail-cards");
+  cards.style.display = "block";
+  document.getElementById("detail-name").textContent = name;
+  const pct = Math.round(d.dem / d.seats * 100);
+  document.getElementById("detail-grid").innerHTML = `
+    <div style="background:var(--color-background-secondary);border-radius:8px;padding:10px 12px;">
+      <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;">Total seats</div>
+      <div style="font-size:20px;font-weight:500;">${d.seats}</div>
+    </div>
+    <div style="background:#E6F1FB;border-radius:8px;padding:10px 12px;">
+      <div style="font-size:12px;color:#185FA5;margin-bottom:4px;">Dem seats</div>
+      <div style="font-size:20px;font-weight:500;color:#0C447C;">${d.dem}</div>
+    </div>
+    <div style="background:#FAECE7;border-radius:8px;padding:10px 12px;">
+      <div style="font-size:12px;color:#993C1D;margin-bottom:4px;">Rep seats</div>
+      <div style="font-size:20px;font-weight:500;color:#712B13;">${d.rep}</div>
+    </div>`;
+  const swingLabel = d.swing > 0 ? `+${d.swing} Dem potential` : d.swing < 0 ? `${d.swing} Dem seats at risk` : "No expected swing";
+  document.getElementById("detail-notes").innerHTML = `<strong>Redistricting:</strong> ${redistrictColors[d.redistrict]?.label ?? d.redistrict} &nbsp;·&nbsp; <strong>Swing:</strong> ${swingLabel}<br><span style="margin-top:4px;display:inline-block;">${d.notes}</span>`;
+}
+
+function renderMap() {
+  const mapDiv = document.getElementById("map");
+  mapDiv.innerHTML = "";
+  const isDark = matchMedia("(prefers-color-scheme: dark)").matches;
+
+  const svg = d3.select("#map").append("svg")
+    .attr("viewBox", "0 0 960 560")
+    .attr("width", "100%")
+    .style("display", "block");
+
+  const tooltip = document.getElementById("tooltip");
+  const projection = d3.geoAlbersUsa().scale(1100).translate([480, 280]);
+  const path = d3.geoPath(projection);
+
+  d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json").then(us => {
+    const features = topojson.feature(us, us.objects.states).features;
+
+    svg.selectAll("path")
+      .data(features)
+      .join("path")
+      .attr("d", path)
+      .attr("stroke", isDark ? "rgba(255,255,255,0.2)" : "#fff")
+      .attr("stroke-width", 0.8)
+      .attr("fill", d => {
+        const name = d.properties.name;
+        const info = stateData[name];
+        if (!info) return "#ccc";
+        if (currentMode === "redistrict") return redistrictColors[info.redistrict]?.fill ?? "#ccc";
+        return swingColor(info.swing).fill;
+      })
+      .style("cursor", "pointer")
+      .on("mouseover", function(event, d) {
+        const name = d.properties.name;
+        const info = stateData[name];
+        if (!info) return;
+        d3.select(this).attr("stroke-width", 2).attr("stroke", isDark ? "#fff" : "#333");
+        const swingText = info.swing > 0 ? `+${info.swing} Dem` : info.swing < 0 ? `${info.swing} Dem` : "No swing";
+        tooltip.style.display = "block";
+        tooltip.innerHTML = `<strong style="font-size:14px;">${name}</strong><br><span style="color:var(--color-text-secondary);font-size:12px;">${redistrictColors[info.redistrict]?.label ?? ""}</span><br><span style="font-size:12px;">Seats: ${info.dem}D / ${info.rep}R &nbsp;·&nbsp; Swing: ${swingText}</span>`;
+        const mapRect = mapDiv.getBoundingClientRect();
+        const x = event.clientX - mapRect.left;
+        const y = event.clientY - mapRect.top;
+        tooltip.style.left = Math.min(x + 12, mapRect.width - 230) + "px";
+        tooltip.style.top = Math.max(y - 10, 0) + "px";
+      })
+      .on("mouseout", function() {
+        d3.select(this).attr("stroke-width", 0.8).attr("stroke", isDark ? "rgba(255,255,255,0.2)" : "#fff");
+        tooltip.style.display = "none";
+      })
+      .on("click", function(event, d) {
+        showDetail(d.properties.name);
+      });
+  });
+}
+
+renderMap();
+renderLegend();
+</script>
